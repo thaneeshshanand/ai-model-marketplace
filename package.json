@@ -1,0 +1,27 @@
+{
+  "name": "ai-model-marketplace",
+  "version": "0.1.0",
+  "private": true,
+  "description": "AI Model Marketplace (AIMM): enterprise blockchain-AI model marketplace. AAI 6850 capstone.",
+  "license": "MIT",
+  "scripts": {
+    "compile": "hardhat compile",
+    "test": "hardhat test",
+    "coverage": "hardhat coverage",
+    "lint": "solhint 'contracts/**/*.sol'",
+    "lint:fix": "solhint 'contracts/**/*.sol' --fix",
+    "slither": "slither . --json slither-report.json",
+    "verify": "npm run lint && npm run compile && npm test && npm run coverage"
+  },
+  "devDependencies": {
+    "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
+    "@nomicfoundation/hardhat-ethers": "^3.0.8",
+    "@nomicfoundation/hardhat-network-helpers": "^1.0.11",
+    "@nomicfoundation/hardhat-verify": "^2.0.11",
+    "chai": "^4.5.0",
+    "ethers": "^6.13.4",
+    "hardhat": "^2.22.17",
+    "solhint": "^5.0.3",
+    "solidity-coverage": "^0.8.13"
+  }
+}

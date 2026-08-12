@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-test-coverage:
+    name: Lint, compile, test, coverage
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      # Requires package-lock.json to be committed. See Phase 0 step 5.
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Lint Solidity
+        run: npm run lint
+
+      - name: Compile
+        run: npm run compile
+
+      - name: Run tests
+        run: npm test
+
+      - name: Measure coverage
+        run: npm run coverage
+
+      - name: Upload coverage report
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          if-no-files-found: warn
+
+  static-analysis:
+    name: Slither static analysis
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      # fail-on: none keeps CI green while findings are still being triaged.
+      # Tighten to fail-on: high once the audit report is written.
+      - name: Run Slither
+        uses: crytic/slither-action@v0.4.0
+        continue-on-error: true
+        with:
+          node-version: "20"
+          fail-on: none
+          slither-args: --json slither-report.json
+
+      - name: Upload Slither report
+        uses: actions/upload-artifact@v4
+        with:
+          name: slither-report
+          path: slither-report.json
+          if-no-files-found: warn
