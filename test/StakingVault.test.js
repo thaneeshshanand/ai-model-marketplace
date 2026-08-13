@@ -495,11 +495,64 @@ describe("StakingVault", function () {
       expect(await vault.balanceOf(alice.address)).to.equal(E(1));
     });
 
-    it("rejects a non-pauser", async function () {
+    it("rejects a non-pauser calling pause", async function () {
       await expect(vault.connect(alice).pause()).to.be.revertedWithCustomError(
         vault,
         "AccessControlUnauthorizedAccount"
       );
+    });
+
+    it("rejects a non-pauser calling unpause", async function () {
+      await vault.connect(admin).pause();
+      await expect(vault.connect(alice).unpause()).to.be.revertedWithCustomError(
+        vault,
+        "AccessControlUnauthorizedAccount"
+      );
+    });
+  });
+
+  // ------------------------------------------------------------------ defensive branches
+
+  describe("reward reserve cap (harness)", function () {
+    // Reaches the `reward > rewardReserve` guard in getReward(). Unreachable through the
+    // public API because integer division in fundRewards always leaves the reserve
+    // sufficient; the harness forces the condition to prove the guard behaves correctly.
+    let harness;
+
+    beforeEach(async function () {
+      const Harness = await ethers.getContractFactory("StakingVaultHarness");
+      harness = await Harness.deploy(
+        await token.getAddress(),
+        admin.address,
+        treasury.address,
+        LOCK_PERIOD,
+        MIN_BOND
+      );
+      await harness.waitForDeployment();
+
+      await harness.grantRole(await harness.REWARD_FUNDER_ROLE(), funder.address);
+      await token.connect(alice).approve(await harness.getAddress(), E(1_000_000_000));
+      await token.connect(funder).approve(await harness.getAddress(), E(1_000_000_000));
+
+      await harness.connect(alice).stake(E(1000));
+      await harness.connect(funder).fundRewards(E(700), 7 * DAY);
+      await time.increase(7 * DAY);
+    });
+
+    it("caps the payout at the reserve and never touches principal", async function () {
+      // Force the reserve below what the accumulator says is owed.
+      await harness.forceRewardReserve(E(10));
+
+      const before = await token.balanceOf(alice.address);
+      await harness.connect(alice).getReward();
+
+      // Paid exactly the reserve, not the full entitlement.
+      expect(await token.balanceOf(alice.address)).to.equal(before + E(10));
+      expect(await harness.rewardReserve()).to.equal(0);
+
+      // Principal is untouched, and the unpaid remainder stays owed.
+      expect(await harness.totalStaked()).to.equal(E(1000));
+      expect(await harness.rewards(alice.address)).to.be.greaterThan(0);
     });
   });
 });

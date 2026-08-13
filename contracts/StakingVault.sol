@@ -156,14 +156,20 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
 
     /// @dev Advances the global accumulator, then credits `account` if one is given.
     ///      Passing address(0) updates global state only.
-    modifier updateReward(address account) {
+    ///
+    ///      This was a modifier originally. It is an explicit internal call because
+    ///      solidity-coverage instruments modifiers as branches split on the `_;`
+    ///      placeholder, and a modifier with no code after `_;` leaves one unreachable
+    ///      branch at every call site. Five call sites meant five phantom uncovered
+    ///      branches. Making the call explicit also puts the state mutation in plain
+    ///      sight at each entrypoint rather than hiding it in a decorator.
+    function _updateReward(address account) internal {
         rewardPerTokenStored = rewardPerToken();
         lastUpdateTime = lastTimeRewardApplicable();
         if (account != address(0)) {
             rewards[account] = earned(account);
             userRewardPerTokenPaid[account] = rewardPerTokenStored;
         }
-        _;
     }
 
     /// @notice The later of now and the end of the reward period.
@@ -192,8 +198,9 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
     /// @dev Increasing a stake resets `lastIncreaseAt`, which disqualifies the account
     ///      from voting on proposals that already exist. Deliberate: it is the check that
     ///      makes flash-loan vote buying impossible.
-    function stake(uint256 amount) external nonReentrant whenNotPaused updateReward(msg.sender) {
+    function stake(uint256 amount) external nonReentrant whenNotPaused {
         if (amount == 0) revert ZeroAmount();
+        _updateReward(msg.sender);
 
         balanceOf[msg.sender] += amount;
         totalStaked += amount;
@@ -205,8 +212,9 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @notice Withdraw unlocked stake. Available even while paused.
-    function withdraw(uint256 amount) public nonReentrant updateReward(msg.sender) {
+    function withdraw(uint256 amount) public nonReentrant {
         if (amount == 0) revert ZeroAmount();
+        _updateReward(msg.sender);
         uint256 staked = balanceOf[msg.sender];
         if (amount > staked) revert InsufficientStake(amount, staked);
         if (block.timestamp < unlockAt[msg.sender]) revert StakeLocked(unlockAt[msg.sender]);
@@ -219,7 +227,9 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
     }
 
     /// @notice Claim accrued rewards.
-    function getReward() public nonReentrant updateReward(msg.sender) {
+    function getReward() public nonReentrant {
+        _updateReward(msg.sender);
+
         uint256 reward = rewards[msg.sender];
         if (reward == 0) return;
 
@@ -244,10 +254,11 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
     function fundRewards(uint256 amount, uint256 duration)
         external
         onlyRole(REWARD_FUNDER_ROLE)
-        updateReward(address(0))
     {
         if (amount == 0) revert ZeroAmount();
         if (duration == 0) revert ZeroDuration();
+
+        _updateReward(address(0));
 
         STAKING_TOKEN.safeTransferFrom(msg.sender, address(this), amount);
         rewardReserve += amount;
@@ -275,10 +286,11 @@ contract StakingVault is AccessControl, ReentrancyGuard, Pausable {
     function slash(address account, uint256 amount)
         external
         onlyRole(SLASHER_ROLE)
-        updateReward(account)
     {
         if (account == address(0)) revert ZeroAddress();
         if (amount == 0) revert ZeroAmount();
+
+        _updateReward(account);
 
         uint256 staked = balanceOf[account];
         if (amount > staked) revert InsufficientStake(amount, staked);
