@@ -212,6 +212,13 @@ contract ModelRegistry is AccessControl {
         return _requireModel(modelId);
     }
 
+    /// @notice Provider address for a model.
+    /// @dev Added for PerformanceOracle and Marketplace, which need only the provider and
+    ///      should not pay to decode a full Model struct across an interface boundary.
+    function getModelProvider(uint256 modelId) external view returns (address) {
+        return _requireModel(modelId).provider;
+    }
+
     /// @notice Whether a model requires enhanced compliance handling.
     /// @dev Consumed by Marketplace to require an enterprise attestation on high-risk
     ///      models while leaving minimal-risk models open.

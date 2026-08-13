@@ -317,6 +317,18 @@ describe("ModelRegistry", function () {
     it("isHighRisk reverts on an unknown model", async function () {
       await expect(registry.isHighRisk(99)).to.be.revertedWithCustomError(registry, "ModelNotFound");
     });
+
+    it("getModelProvider returns the provider", async function () {
+      await register(provider);
+      expect(await registry.getModelProvider(1)).to.equal(provider.address);
+    });
+
+    it("getModelProvider reverts on an unknown model", async function () {
+      await expect(registry.getModelProvider(99)).to.be.revertedWithCustomError(
+        registry,
+        "ModelNotFound"
+      );
+    });
   });
 
   describe("setStakingVault", function () {
