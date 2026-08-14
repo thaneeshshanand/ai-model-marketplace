@@ -299,7 +299,7 @@ Carried forward from `SECURITY_AUDIT.md` section 5, with the business consequenc
 
 | ID | Risk | Business consequence |
 |---|---|---|
-| R-01 | Trusted relayer can corrupt the Amoy mirror | Provenance claim weakened on one chain; Sepolia record unaffected |
+| R-01 | Trusted relayer can corrupt the destination-chain mirror | Provenance claim weakened on one chain; Sepolia record unaffected |
 | R-02 | Repeated challenge delays slashing | Enforcement credibility erodes if abused visibly |
 | R-03 | Governance deadlock freezes parameters | Fee and bond levels become unadjustable; admin backstop exists |
 | R-04 | Reporters unbonded | A colluding majority could slash honest providers |

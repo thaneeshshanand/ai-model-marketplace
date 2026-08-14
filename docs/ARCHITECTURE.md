@@ -16,7 +16,7 @@ scores. If aggregated performance falls below a governed threshold, the provider
 slashed and the model loses sellability automatically. Enterprises license models at a fixed
 price through a commit-reveal flow that keeps procurement decisions private. Protocol
 parameters are controlled by stake-weighted governance. Model provenance replicates from
-Ethereum Sepolia to Polygon Amoy.
+Ethereum Sepolia to Base Sepolia.
 
 The central design claim is that **a provider's economic exposure and their commercial
 standing are the same variable**. `ModelRegistry.isListable` consults
@@ -64,7 +64,7 @@ without any administrative action, listing change, or manual intervention.
                                     (RELAYER_ROLE)
                                               │
    ┌──────────────────────────────────────────┼────────────────────┐
-   │                         POLYGON AMOY     ▼                    │
+   │                         BASE SEPOLIA     ▼                    │
    │                                   RegistryReceiver            │
    │                                   mirror, advisory            │
    │                                                               │
@@ -319,11 +319,11 @@ setting: no proposal, and no captured governance, can reduce either delay to zer
 
 ### 3.8 RegistryGateway and RegistryReceiver
 
-One-directional provenance replication, Sepolia to Amoy.
+One-directional provenance replication, Sepolia to the destination chain.
 
 `attestModel(modelId)` reads live registry state and emits `ModelAttested` carrying nonce,
 model id, provider, listability, risk tier, and source timestamp. An off-chain relayer forwards
-those six values unchanged to `receiveAttestation` on Amoy.
+those six values unchanged to `receiveAttestation` on the destination chain.
 
 **This is a permissioned relay, not a trustless bridge.** No light client, no proof
 verification, no signature threshold. The security argument bounds the consequence rather than
@@ -331,7 +331,7 @@ eliminating the trust:
 
 - `RegistryReceiver` writes only its own mirror mapping, holds no role on any other contract on
   either chain, custodies no funds, and makes no external calls.
-- A compromised relayer can corrupt Amoy mirror state and nothing else. It cannot mint, slash,
+- A compromised relayer can corrupt destination-chain mirror state and nothing else. It cannot mint, slash,
   vote, move escrow, or alter any Sepolia state.
 - Mirrored data is advisory. No authoritative decision depends on it in this release.
 
@@ -471,7 +471,7 @@ attestor ─► attestModel(id) again ─────────────►
 | `REPORTER_ROLE` | Benchmark providers | Submit scores | Finalize alone, slash directly |
 | `REWARD_FUNDER_ROLE` | Treasury operations | Deposit rewards | Withdraw them |
 | `PAUSER_ROLE` | Operations | Block new stakes and commits | Block withdrawals, reveals, or claims |
-| `RELAYER_ROLE` | Relayer account | Write Amoy mirror entries | Reach any other contract |
+| `RELAYER_ROLE` | Relayer account | Write destination-chain mirror entries | Reach any other contract |
 
 **No role can mint AIM.** No mint function exists. **No role can withdraw another account's
 stake or escrow.** **No role can prevent a user retrieving unlocked funds.**
@@ -534,7 +534,7 @@ Stating what was not built, and why, matters as much as describing what was.
 | Reporter bonding | Correct, but adds economic machinery beyond this release. Recorded as R-04. |
 | On-chain dispute arbitration | A contract adjudicating benchmark disputes is beyond what this system should attempt. |
 | Median aggregation | Permissioning already provides outlier resistance for a capped, governed reporter set. |
-| Amoy-side marketplace consuming the mirror | Would require duplicating the token, compliance registry, and listing set on a second chain for no additional demonstrated capability. `isMirroredListable` exposes the hook. |
+| destination-chain marketplace consuming the mirror | Would require duplicating the token, compliance registry, and listing set on a second chain for no additional demonstrated capability. `isMirroredListable` exposes the hook. |
 
 ---
 

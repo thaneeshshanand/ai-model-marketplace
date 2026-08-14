@@ -1,5 +1,12 @@
 # AIMM Deployment Runbook
 
+> **Status note, added after deployment.** This runbook was written before deployment and
+> targets Polygon Amoy as the destination chain. The actual deployment used **Base Sepolia**
+> (chain 84532), because Amoy's public RPC endpoints were unreachable from Remix during the
+> deployment window, as were Linea Sepolia and Arbitrum Sepolia. No contract code changed:
+> neither cross-chain contract holds a chain identifier. Read "Amoy" below as "the destination
+> chain". Final addresses are in `README.md` and `docs/DEMONSTRATION.md`.
+
 Deploy from Remix IDE via MetaMask. No private key ever enters the repository or the
 Codespace.
 

@@ -23,7 +23,7 @@ expectations but were analysed and are reported where flagged.
 | `PerformanceOracle` | Benchmark aggregation and bond enforcement |
 | `ParameterGovernor` | Stake-weighted parameter governance |
 | `RegistryGateway` | Cross-chain attestation emitter (Sepolia) |
-| `RegistryReceiver` | Cross-chain registry mirror (Amoy) |
+| `RegistryReceiver` | Cross-chain registry mirror (Base Sepolia) |
 
 ### Toolchain
 
@@ -353,13 +353,13 @@ discovered by a reader.
 
 The cross-chain sync is a permissioned relay, not a trustless bridge. There is no light
 client, no proof verification and no signature threshold. An account holding `RELAYER_ROLE`
-on `RegistryReceiver` can publish arbitrary mirror entries on Polygon Amoy.
+on `RegistryReceiver` can publish arbitrary mirror entries on Base Sepolia.
 
 **Why this is acceptable rather than dismissed.** The consequence is bounded by design:
 
 - `RegistryReceiver` writes only its own mirror mapping. It holds no role on any other
   contract on either chain, custodies no funds, and makes no external calls.
-- A compromised relayer can therefore corrupt Amoy mirror state and nothing else. It cannot
+- A compromised relayer can therefore corrupt destination-chain mirror state and nothing else. It cannot
   mint, slash, vote, move escrow, or alter any Sepolia state.
 - Mirrored data is advisory on the destination chain. No authoritative decision depends on
   it in this release.
@@ -476,7 +476,7 @@ dedicated tests.
 
 | ID | Risk | Inherent severity | Post-mitigation | Owner |
 |---|---|---|---|---|
-| R-01 | Trusted relayer can corrupt Amoy mirror | High | Low, consequence bounded to advisory state | Protocol ops |
+| R-01 | Trusted relayer can corrupt destination-chain mirror | High | Low, consequence bounded to advisory state | Protocol ops |
 | R-02 | Repeated challenge delays slashing | Medium | Medium, reputational exposure remains | Governance |
 | R-03 | Governance deadlock freezes parameters | Medium | Low, admin break-glass exists | Multisig holder |
 | R-04 | Reporters unbonded | Medium | Medium, admission-controlled only | Governance |
