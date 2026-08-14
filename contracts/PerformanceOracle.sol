@@ -212,10 +212,30 @@ contract PerformanceOracle is AccessControl {
         if (hasSubmitted[modelId][round][msg.sender]) revert AlreadySubmitted(modelId, round);
 
         if (r.count > 0) {
-            uint256 runningMean = r.sum / r.count;
-            uint256 delta = score > runningMean ? score - runningMean : runningMean - score;
-            if ((delta * SCORE_SCALE) > (runningMean * maxDeviationBps)) {
-                revert DeviationTooLarge(score, runningMean, maxDeviationBps);
+            // Deviation guard, restructured to remove all division from the comparison.
+            //
+            // The natural form is:
+            //     runningMean = sum / count
+            //     delta       = |score - runningMean|
+            //     reject if    delta * SCORE_SCALE > runningMean * maxDeviationBps
+            //
+            // That divides before multiplying, so the truncated mean feeds a product and
+            // Slither flags it (divide-before-multiply). Multiplying both sides by `count`
+            // gives an algebraically identical test with no division at all:
+            //
+            //     scaledDelta = |score * count - sum|          (this is delta * count)
+            //     reject if     scaledDelta * SCORE_SCALE > sum * maxDeviationBps
+            //
+            // Exact rather than merely conservative. Overflow is impossible: score is
+            // bounded by SCORE_SCALE (10,000) and count by MAX_REPORTERS (7), so the
+            // largest intermediate is 7e8.
+            uint256 scaled = score * r.count;
+            uint256 scaledDelta = scaled > r.sum ? scaled - r.sum : r.sum - scaled;
+
+            if ((scaledDelta * SCORE_SCALE) > (r.sum * maxDeviationBps)) {
+                // The mean is computed only on the revert path, purely for the error
+                // message, so no product consumes a truncated value.
+                revert DeviationTooLarge(score, r.sum / r.count, maxDeviationBps);
             }
         }
 

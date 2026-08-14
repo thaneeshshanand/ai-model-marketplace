@@ -46,6 +46,12 @@ interface IStakingVotes {
 ///            deliberately absent: governance making itself more conservative is not the
 ///            attack, so bounding that direction would be symmetry for its own sake.
 ///
+///            The floors are set at demonstration values (5 minutes) rather than
+///            production values (days) so that a complete propose-vote-execute cycle is
+///            observable on a testnet in one sitting. What the floor guarantees is
+///            structural: no proposal, and no captured governance, can reduce the delay to
+///            zero. The appropriate deployed values are stated in the deployment runbook.
+///
 ///         5. PROPOSAL STATE IS DERIVED, NOT STORED. `state()` computes from timestamps
 ///            and tallies. No transition writes exist, so no transition can be missed.
 ///
@@ -61,11 +67,17 @@ contract ParameterGovernor is AccessControl {
     /// @notice Quorum may never fall below 4 percent of staked supply.
     uint256 public constant MIN_QUORUM_BPS = 400;
 
-    /// @notice Voting may never be shorter than one day.
-    uint256 public constant MIN_VOTING_PERIOD = 1 days;
+    /// @notice Voting may never be shorter than five minutes.
+    /// @dev Deliberately short so a full governance cycle is demonstrable live on testnet.
+    ///      Production deployments should pass a votingPeriod of 3 to 7 days; the floor
+    ///      exists to guarantee the delay can never be removed entirely, not to set policy.
+    ///      This mirrors the treatment of PerformanceOracle.challengeWindow.
+    uint256 public constant MIN_VOTING_PERIOD = 5 minutes;
 
-    /// @notice Execution may never follow success by less than one hour.
-    uint256 public constant MIN_EXECUTION_DELAY = 1 hours;
+    /// @notice Execution may never follow success by less than five minutes.
+    /// @dev Same reasoning. Production should pass 2 days. The floor guarantees a
+    ///      non-zero reaction window exists between a proposal passing and taking effect.
+    uint256 public constant MIN_EXECUTION_DELAY = 5 minutes;
 
     /// @notice Derived lifecycle. Never stored.
     enum ProposalState {

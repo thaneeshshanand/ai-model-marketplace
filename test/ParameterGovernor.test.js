@@ -162,7 +162,7 @@ describe("ParameterGovernor", function () {
     it("enforces the voting period floor", async function () {
       const G = await ethers.getContractFactory("ParameterGovernor");
       await expect(
-        G.deploy(admin.address, await vault.getAddress(), [await market.getAddress()], HOUR, EXECUTION_DELAY, QUORUM_BPS, 0)
+        G.deploy(admin.address, await vault.getAddress(), [await market.getAddress()], 60, EXECUTION_DELAY, QUORUM_BPS, 0)
       ).to.be.revertedWithCustomError(G, "BelowFloor");
     });
 
@@ -504,7 +504,7 @@ describe("ParameterGovernor", function () {
     });
 
     it("cannot shrink the voting period below the floor", async function () {
-      const data = governor.interface.encodeFunctionData("setVotingPeriod", [HOUR]);
+      const data = governor.interface.encodeFunctionData("setVotingPeriod", [60]);
       await governor.connect(alice).propose(await governor.getAddress(), data);
       const id = await governor.proposalCount();
       await governor.connect(alice).castVote(id, FOR);

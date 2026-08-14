@@ -10,11 +10,8 @@
     "coverage": "hardhat coverage",
     "lint": "solhint 'contracts/**/*.sol'",
     "lint:fix": "solhint 'contracts/**/*.sol' --fix",
-    "slither": "slither . --json slither-report.json",
+    "slither": "rm -f slither-report.json && slither . --json slither-report.json",
     "verify": "npm run lint && npm run compile && npm test && npm run coverage"
-  },
-  "dependencies": {
-    "@openzeppelin/contracts": "^5.1.0"
   },
   "devDependencies": {
     "@nomicfoundation/hardhat-chai-matchers": "^2.0.7",
@@ -26,5 +23,8 @@
     "hardhat": "^2.22.17",
     "solhint": "^5.0.3",
     "solidity-coverage": "^0.8.13"
+  },
+  "dependencies": {
+    "@openzeppelin/contracts": "^5.1.0"
   }
 }
